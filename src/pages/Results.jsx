@@ -6,7 +6,9 @@ import {
   Download, 
   Shield
 } from 'lucide-react';
-import { MOCK_INSPECTION_DATA } from '../data/mockResultsData';
+import { getInspection } from "../services/inspectionService";
+
+
 import { REVIEW_STORAGE_KEY } from '../data/mockReviewData';
 import { useLanguage } from '../context/LanguageContext';
 import { saveInspectionToHistory } from '../data/mockHistoryData';
@@ -24,6 +26,29 @@ export const Results = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
+    const [inspection, setInspection] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const inspectionId = new URLSearchParams(location.search)
+    .get("inspectionId");
+
+  useEffect(() => {
+    async function loadInspection() {
+      try {
+        const data = await getInspection(inspectionId);
+        console.log("REAL INSPECTION:", data);
+        setInspection(data);
+      } catch (error) {
+        console.error("Failed to load inspection:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (inspectionId) {
+      loadInspection();
+    }
+  }, [inspectionId]);
   const { addToast } = useToast();
 
   // Retrieve image from React Router state or sessionStorage fallback
@@ -35,6 +60,7 @@ export const Results = () => {
     } catch (e) {
       console.warn('Could not read stored image from sessionStorage', e);
     }
+    
     return null;
   });
 
@@ -58,18 +84,18 @@ export const Results = () => {
   // Automatically save inspection to history when viewing results
   useEffect(() => {
     const historyRecord = {
-      inspectionId: MOCK_INSPECTION_DATA.inspectionId || 'INS-2026-0001',
-      productName: MOCK_INSPECTION_DATA.product?.name || 'Premium Basmati Rice',
+      inspectionId: inspection.inspectionId || 'INS-2026-0001',
+      productName: inspection.product?.name || 'Premium Basmati Rice',
       category: 'Food Grains & Pulses',
       categoryGroup: 'Food Grains & Pulses',
-      manufacturer: MOCK_INSPECTION_DATA.product?.manufacturer || 'ABC Foods Pvt. Ltd.',
-      netQuantity: MOCK_INSPECTION_DATA.product?.netQuantity || '5 kg',
-      mrp: MOCK_INSPECTION_DATA.product?.mrp || '₹520',
+      manufacturer: inspection.product?.manufacturer || 'ABC Foods Pvt. Ltd.',
+      netQuantity: inspection.product?.netQuantity || '5 kg',
+      mrp: inspection.product?.mrp || '₹520',
       date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       rawDate: new Date().toISOString().split('T')[0],
-      officer: MOCK_INSPECTION_DATA.inspector?.name || 'Officer',
-      complianceScore: MOCK_INSPECTION_DATA.overall?.score || 82,
-      status: savedOfficerReview ? (savedOfficerReview.decision === 'VIOLATION' ? 'NON-COMPLIANT' : 'COMPLIANT') : (MOCK_INSPECTION_DATA.overall?.status || 'NEEDS REVIEW'),
+      officer: inspection.inspector?.name || 'Officer',
+      complianceScore: inspection.overall?.score || 82,
+      status: savedOfficerReview ? (savedOfficerReview.decision === 'VIOLATION' ? 'NON-COMPLIANT' : 'COMPLIANT') : (inspection.overall?.status || 'NEEDS REVIEW'),
       hasReport: true,
       hasEvidence: true,
     };
@@ -111,17 +137,14 @@ export const Results = () => {
   const handleSaveReview = (reviewData) => {
     setSavedOfficerReview(reviewData);
     const historyRecord = {
-      inspectionId: MOCK_INSPECTION_DATA.inspectionId || 'INS-2026-0001',
-      productName: MOCK_INSPECTION_DATA.product?.name || 'Premium Basmati Rice',
-      category: 'Food Grains & Pulses',
-      categoryGroup: 'Food Grains & Pulses',
-      manufacturer: MOCK_INSPECTION_DATA.product?.manufacturer || 'ABC Foods Pvt. Ltd.',
-      netQuantity: MOCK_INSPECTION_DATA.product?.netQuantity || '5 kg',
-      mrp: MOCK_INSPECTION_DATA.product?.mrp || '₹520',
+     productName: inspection.product?.name || 'Unknown Product',
+manufacturer: inspection.product?.manufacturer || 'Unknown',
+netQuantity: inspection.product?.netQuantity || '-',
+mrp: inspection.product?.mrp || '-',
       date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       rawDate: new Date().toISOString().split('T')[0],
-      officer: MOCK_INSPECTION_DATA.inspector?.name || 'Officer',
-      complianceScore: MOCK_INSPECTION_DATA.overall?.score || 82,
+      officer: inspection.inspector?.name || 'Officer',
+      complianceScore: inspection.overall?.score || 82,
       status: reviewData.decision === 'VIOLATION' ? 'NON-COMPLIANT' : 'COMPLIANT',
       hasReport: true,
       hasEvidence: true,
@@ -141,21 +164,28 @@ export const Results = () => {
   const handleBackToScanner = () => {
     navigate('/scanner');
   };
+    if (loading) {
+    return <div className="p-8">Loading inspection...</div>;
+  }
+
+  if (!inspection) {
+    return <div className="p-8">Inspection not found.</div>;
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* 1. Header with Breadcrumb and Inspection ID */}
       <ResultsHeader
-        inspectionId={MOCK_INSPECTION_DATA.inspectionId}
-        date={MOCK_INSPECTION_DATA.date}
+        inspectionId={inspection.inspectionId}
+        date={inspection.date}
       />
 
       {/* 2. Prominent Overall Compliance Summary Card */}
       <ComplianceSummary
-        score={MOCK_INSPECTION_DATA.overall.score}
-        status={MOCK_INSPECTION_DATA.overall.status}
-        confidence={MOCK_INSPECTION_DATA.overall.confidence}
-        summaryText={MOCK_INSPECTION_DATA.overall.summaryText}
+        score={inspection.overall.score}
+        status={inspection.overall.status}
+        confidence={inspection.overall.confidence}
+        summaryText={inspection.overall.summaryText}
       />
 
       {/* 3. Main Two-Column Layout (Responsive: Stack on Mobile/Tablet, 2 Columns on Desktop) */}
@@ -164,7 +194,7 @@ export const Results = () => {
         <div className="lg:col-span-5 space-y-5 lg:sticky lg:top-20">
           <ProductImageViewer
             imageSrc={imageSrc}
-            regions={MOCK_INSPECTION_DATA.regions}
+            regions={inspection.regions}
             activeRegionId={activeRegionId}
             onRegionClick={handleRegionClick}
           />
@@ -176,26 +206,26 @@ export const Results = () => {
                 {t('productProfile', 'Product Profile')}
               </span>
               <span className="font-mono text-cyan-800 bg-cyan-50 px-2 py-0.5 rounded font-bold text-[10px]">
-                {MOCK_INSPECTION_DATA.product.category}
+                {inspection.product.category}
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-slate-700">
               <div>
                 <span className="text-slate-400 text-[10px] block">{t('brandName', 'Brand Name')}</span>
-                <strong className="text-slate-900">{MOCK_INSPECTION_DATA.product.name}</strong>
+                <strong className="text-slate-900">{inspection.product.name}</strong>
               </div>
               <div>
                 <span className="text-slate-400 text-[10px] block">{t('netQuantity', 'Net Quantity')}</span>
-                <strong className="text-slate-900 font-mono">{MOCK_INSPECTION_DATA.product.netQuantity}</strong>
+                <strong className="text-slate-900 font-mono">{inspection.product.netQuantity}</strong>
               </div>
               <div>
                 <span className="text-slate-400 text-[10px] block">{t('maximumRetailPrice', 'Maximum Retail Price')}</span>
-                <strong className="text-slate-900 font-mono">{MOCK_INSPECTION_DATA.product.mrp}</strong>
+                <strong className="text-slate-900 font-mono">{inspection.product.mrp}</strong>
               </div>
               <div>
                 <span className="text-slate-400 text-[10px] block">{t('batchNumber', 'Batch Number')}</span>
-                <strong className="text-slate-900 font-mono">{MOCK_INSPECTION_DATA.product.batchNo}</strong>
+                <strong className="text-slate-900 font-mono">{inspection.product.batchNo}</strong>
               </div>
             </div>
           </div>
@@ -213,12 +243,12 @@ export const Results = () => {
                 </h3>
               </div>
               <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                {MOCK_INSPECTION_DATA.potentialViolations.length} {t('itemsFlagged', 'Items Flagged')}
+                {inspection.potentialViolations.length} {t('itemsFlagged', 'Items Flagged')}
               </span>
             </div>
 
             <div className="space-y-3">
-              {MOCK_INSPECTION_DATA.potentialViolations.map((violation) => (
+              {inspection.potentialViolations.map((violation) => (
                 <ViolationCard
                   key={violation.id}
                   title={violation.title}
@@ -235,13 +265,13 @@ export const Results = () => {
 
           {/* Section: Extracted Declarations (9 Mandatory Fields) */}
           <ExtractedDeclarations
-            declarations={MOCK_INSPECTION_DATA.declarations}
+            declarations={inspection.declarations}
             onSelectEvidence={handleOpenEvidence}
           />
 
           {/* Section: Compliance Checks (6 Key Rules & Standards) */}
           <ComplianceChecklist
-            checks={MOCK_INSPECTION_DATA.complianceChecks}
+            checks={inspection.complianceChecks}
             onSelectEvidence={handleOpenEvidence}
           />
         </div>
@@ -261,7 +291,7 @@ export const Results = () => {
       <div className="sticky bottom-4 z-20 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-300/80 p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <Shield className="w-4 h-4 text-cyan-600" />
-          <span>{t('session', 'Session')}: <strong className="text-slate-800 font-mono">{MOCK_INSPECTION_DATA.inspectionId}</strong></span>
+          <span>{t('session', 'Session')}: <strong className="text-slate-800 font-mono">{inspection.inspectionId}</strong></span>
           <span className="text-slate-300">|</span>
           <span>{t('status', 'Status')}: <strong className={savedOfficerReview ? "text-emerald-700" : "text-amber-700"}>{savedOfficerReview ? t('reviewed', 'Reviewed') : t('needsReview', 'Needs Review')}</strong></span>
         </div>
@@ -279,7 +309,7 @@ export const Results = () => {
 
           <button
             type="button"
-            onClick={() => navigate(`/review/${MOCK_INSPECTION_DATA.inspectionId}`)}
+            onClick={() => navigate(`/review/${inspection.inspectionId}`)}
             className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold text-slate-800 hover:text-slate-950 bg-slate-100 hover:bg-slate-200/80 border border-slate-300 rounded-xl transition-colors shadow-2xs cursor-pointer active:scale-98"
           >
             <span>{t('reviewFindings', 'Review Findings')}</span>
