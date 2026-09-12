@@ -8,7 +8,10 @@ import {
 } from 'lucide-react';
 
 import { useLanguage } from '../context/LanguageContext';
-import { getInspectionStatus } from '../services/inspectionService';
+import {
+  getInspectionStatus,
+  getInspection,
+} from '../services/inspectionService';
 
 import { ProductPreview } from '../components/processing/ProductPreview';
 import { ProgressBar } from '../components/processing/ProgressBar';
@@ -68,22 +71,52 @@ export const Processing = () => {
         setCurrentProgress(status.progress || 0);
         setStatusMessage(status.stage || 'Processing...');
 
-        if (status.status === 'COMPLETED') {
-          setCurrentProgress(100);
-          setIsComplete(true);
-          setStatusMessage('Inspection completed successfully.');
+       if (status.status === 'COMPLETED') {
+  setCurrentProgress(100);
+  setIsComplete(true);
+  setStatusMessage('Inspection completed successfully.');
 
-          if (timer) {
-            clearInterval(timer);
-          }
+  if (timer) {
+    clearInterval(timer);
+  }
 
-          setTimeout(() => {
-            if (isMounted) {
-              navigate(`/results?inspectionId=${inspectionId}`);
-            }
-          }, 500);
-        }
+  // Make sure the actual inspection record exists
+  // before navigating to the Results page.
+  try {
+    const inspection = await getInspection(inspectionId);
 
+    console.log('REAL INSPECTION:', inspection);
+
+    if (!inspection) {
+      console.error(
+        'Inspection completed but inspection data is null:',
+        inspectionId
+      );
+
+      setStatusMessage(
+        'Analysis completed, but inspection results are still loading...'
+      );
+
+      return;
+    }
+
+    if (!isMounted) return;
+
+    navigate(`/results?inspectionId=${inspectionId}`, {
+      state: {
+        inspection,
+      },
+    });
+  } catch (error) {
+    console.error('Failed to load completed inspection:', error);
+
+    if (isMounted) {
+      setStatusMessage(
+        'Analysis completed, but results could not be loaded. Retrying...'
+      );
+    }
+  }
+}
         if (status.status === 'FAILED') {
           setStatusMessage(
             status.errorMessage || 'Processing failed.'
