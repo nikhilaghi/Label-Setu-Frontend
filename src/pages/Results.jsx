@@ -154,9 +154,7 @@ useEffect(() => {
     setIsReviewModalOpen(true);
   };
 
-  const handleSaveReview = (reviewData) => {
-    setSavedOfficerReview(reviewData);
-    const handleSaveReview = (reviewData) => {
+const handleSaveReview = (reviewData) => {
   setSavedOfficerReview(reviewData);
 
   addToast({
@@ -165,12 +163,6 @@ useEffect(() => {
     type: 'success',
   });
 };
-    addToast({
-      title: 'Officer Review Logged',
-      message: `Assessment marked as "${reviewData.decision}" by officer.`,
-      type: 'success',
-    });
-  };
 
   const handleGenerateReport = () => {
     navigate('/reports/generate');
@@ -179,7 +171,8 @@ useEffect(() => {
   const handleBackToScanner = () => {
     navigate('/scanner');
   };
-    if (loading) {
+
+  if (loading) {
     return <div className="p-8">Loading inspection...</div>;
   }
 
