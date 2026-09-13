@@ -130,39 +130,6 @@ useEffect(() => {
   });
   const [activeRegionId, setActiveRegionId] = useState(null);
 
-  // Automatically save inspection to history when viewing results
-// Automatically save inspection to history when viewing results
-useEffect(() => {
-  if (!inspection) return;
-
-  const historyRecord = {
-    inspectionId: inspection.inspectionId || 'INS-2026-0001',
-    productName: inspection.product?.name || 'Unknown Product',
-    category: inspection.product?.category || 'Unknown',
-    categoryGroup: inspection.product?.category || 'Unknown',
-    manufacturer: inspection.product?.manufacturer || 'Unknown',
-    netQuantity: inspection.product?.netQuantity || '-',
-    mrp: inspection.product?.mrp || '-',
-    date: new Date().toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    }),
-    rawDate: new Date().toISOString().split('T')[0],
-    officer: inspection.inspector?.name || 'Officer',
-    complianceScore: inspection.overall?.score ?? 0,
-    status: savedOfficerReview
-      ? (
-          savedOfficerReview.decision === 'VIOLATION'
-            ? 'NON-COMPLIANT'
-            : 'COMPLIANT'
-        )
-      : (inspection.overall?.status || 'NEEDS REVIEW'),
-    hasReport: true,
-    hasEvidence: true,
-  };
-
-}, [inspection, savedOfficerReview]);
 
   // Handlers
   const handleOpenEvidence = (item) => {
