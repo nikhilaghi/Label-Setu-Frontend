@@ -9,9 +9,7 @@ import {
 import { getInspection } from "../services/inspectionService";
 
 
-import { REVIEW_STORAGE_KEY } from '../data/mockReviewData';
 import { useLanguage } from '../context/LanguageContext';
-import { saveInspectionToHistory } from '../data/mockHistoryData';
 import { ResultsHeader } from '../components/results/ResultsHeader';
 import { ComplianceSummary } from '../components/results/ComplianceSummary';
 import { ProductImageViewer } from '../components/results/ProductImageViewer';
@@ -32,37 +30,88 @@ export const Results = () => {
   const inspectionId = new URLSearchParams(location.search)
     .get("inspectionId");
 
-  useEffect(() => {
-    async function loadInspection() {
-      try {
-        const data = await getInspection(inspectionId);
-        console.log("REAL INSPECTION:", data);
-        setInspection(data);
-      } catch (error) {
-        console.error("Failed to load inspection:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
+ useEffect(() => {
+  async function loadInspection() {
+    try {
+      const data = await getInspection(inspectionId);
 
-    if (inspectionId) {
-      loadInspection();
+      console.log("REAL INSPECTION:", data);
+
+      if (!data || !data.inspectionId) {
+        console.error("Invalid inspection response:", data);
+        setInspection(null);
+        return;
+      }
+
+      // Make optional backend arrays safe for the UI
+      const safeInspection = {
+        ...data,
+        declarations: Array.isArray(data.declarations)
+          ? data.declarations
+          : [],
+
+        complianceChecks: Array.isArray(data.complianceChecks)
+          ? data.complianceChecks
+          : [],
+
+        potentialViolations: Array.isArray(data.potentialViolations)
+          ? data.potentialViolations
+          : [],
+
+        regions: Array.isArray(data.regions)
+          ? data.regions
+          : [],
+
+        overall: data.overall || {
+          score: 0,
+          status: 'NEEDS REVIEW',
+          confidence: 0,
+          summaryText: 'Analysis completed.'
+        },
+
+        product: data.product || {
+          name: 'Unknown Product',
+          category: 'Unknown',
+          netQuantity: '-',
+          mrp: '-',
+          batchNo: '-'
+        },
+
+        inspector: data.inspector || {
+          name: 'Officer'
+        }
+      };
+
+      setInspection(safeInspection);
+
+    } catch (error) {
+      console.error("Failed to load inspection:", error);
+      setInspection(null);
+    } finally {
+      setLoading(false);
     }
-  }, [inspectionId]);
+  }
+
+  if (inspectionId) {
+    loadInspection();
+  } else {
+    setLoading(false);
+  }
+}, [inspectionId]);
+
   const { addToast } = useToast();
 
-  // Retrieve image from React Router state or sessionStorage fallback
-  const [imageSrc] = useState(() => {
-    if (location.state?.image) return location.state.image;
-    try {
-      const stored = sessionStorage.getItem('label_setu_inspection_image');
-      if (stored) return stored;
-    } catch (e) {
-      console.warn('Could not read stored image from sessionStorage', e);
-    }
-    
-    return null;
-  });
+  const [imageSrc, setImageSrc] = useState(null);
+
+useEffect(() => {
+  if (!inspectionId) return;
+
+  const apiUrl = import.meta.env.VITE_API_URL;
+
+  setImageSrc(
+    `${apiUrl}/api/inspections/${inspectionId}/image`
+  );
+}, [inspectionId]);
 
   // Modal states
   const [selectedEvidence, setSelectedEvidence] = useState(null);
@@ -231,15 +280,15 @@ mrp: inspection.product?.mrp || '-',
               </div>
               <div>
                 <span className="text-slate-400 text-[10px] block">{t('netQuantity', 'Net Quantity')}</span>
-                <strong className="text-slate-900 font-mono">{inspection.product.netQuantity}</strong>
+                <strong className="text-slate-900 font-mono">{inspection.product?.netQuantity || '-'}</strong>
               </div>
               <div>
                 <span className="text-slate-400 text-[10px] block">{t('maximumRetailPrice', 'Maximum Retail Price')}</span>
-                <strong className="text-slate-900 font-mono">{inspection.product.mrp}</strong>
+                <strong className="text-slate-900 font-mono">{inspection.product?.mrp || '-'}</strong>
               </div>
               <div>
                 <span className="text-slate-400 text-[10px] block">{t('batchNumber', 'Batch Number')}</span>
-                <strong className="text-slate-900 font-mono">{inspection.product.batchNo}</strong>
+                <strong className="text-slate-900 font-mono">{inspection.product?.batchNo || '-'}</strong>
               </div>
             </div>
           </div>
@@ -257,7 +306,9 @@ mrp: inspection.product?.mrp || '-',
                 </h3>
               </div>
               <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                {inspection.potentialViolations.length} {t('itemsFlagged', 'Items Flagged')}
+                <strong className="text-slate-900">
+  {inspection.product?.name || 'Unknown Product'}
+</strong>
               </span>
             </div>
 

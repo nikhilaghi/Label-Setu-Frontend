@@ -7,7 +7,6 @@ import {
   Save,
 } from 'lucide-react';
 
-import { MOCK_INSPECTION_DATA } from '../data/mockResultsData';
 import {
   REVIEW_FINDINGS,
   CHECKLIST_ITEMS,
@@ -209,16 +208,16 @@ export const OfficerReviewPage = () => {
         {/* Inspection Meta */}
         <div className="mt-5 pt-5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: t('inspectionId', 'Inspection ID'), value: MOCK_INSPECTION_DATA.inspectionId },
-            { label: t('product', 'Product'), value: MOCK_INSPECTION_DATA.product.name },
+            { label: t('inspectionId', 'Inspection ID'), value: inspection?.inspectionId || inspectionId },
+            { label: t('product', 'Product'), value: inspection?.product?.name || '' },
             {
               label: t('status', 'Status'),
-              value: MOCK_INSPECTION_DATA.overall.status,
+              value: inspection?.overall?.status || '',
               highlight: true,
             },
             {
               label: t('complianceScore', 'Compliance Score'),
-              value: `${MOCK_INSPECTION_DATA.overall.score}%`,
+              value: `${inspection?.overall?.score ?? 0}%`,
             },
           ].map(({ label, value, highlight }) => (
             <div key={label}>

@@ -3,15 +3,16 @@ import { Scale, Shield, Calendar, User, Building2, Award } from 'lucide-react';
 import { StatusBadge } from '../results/StatusBadge';
 
 export const InspectionOverview = ({
-  inspectionId = 'INS-2026-0001',
-  productName = 'Premium Basmati Rice',
-  category = 'Food Grains & Pulses (Packaged)',
-  date = '05 September 2026',
-  officer = 'Officer',
-  department = 'Legal Metrology',
-  reviewStatus = 'REVIEWED',
-  finalAssessment = 'Inspection Requires Further Review',
+  inspectionId = '',
+  productName = '',
+  category = '',
+  date = '',
+  officer = '',
+  department = '',
+  reviewStatus = '',
+  finalAssessment = '',
 }) => {
+
   const isReviewed = reviewStatus === 'REVIEWED';
 
   return (

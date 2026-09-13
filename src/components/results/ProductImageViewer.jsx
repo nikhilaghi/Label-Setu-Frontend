@@ -137,67 +137,9 @@ export const ProductImageViewer = ({
               alt={t('scannedCommodityEvidence', 'Scanned Packaged Commodity')}
               className="max-h-[420px] w-auto max-w-full object-contain rounded-md shadow-lg"
             />
-          ) : (
-            /* Realistic Mock Packaged Commodity Package (Rice Brand Label) */
-            <div className="w-[320px] sm:w-[360px] h-[420px] bg-gradient-to-b from-amber-50 via-white to-amber-50/80 rounded-xl border-2 border-slate-300 shadow-2xl p-6 flex flex-col justify-between text-slate-900 font-sans relative overflow-hidden">
-              {/* Product Header & Brand */}
-              <div className="text-center space-y-1 border-b pb-3 border-amber-200">
-                <div className="inline-block px-2.5 py-0.5 bg-amber-700 text-white text-[10px] font-bold rounded-sm tracking-wider uppercase">
-                  Premium Quality Grains
-                </div>
-                <h3 className="text-xl font-extrabold tracking-tight text-slate-900 pt-1">
-                  ABC PREMIUM RICE
-                </h3>
-                <p className="text-[11px] text-slate-600 font-medium italic">
-                  Aged Indian Basmati Rice • Traditional Harvest
-                </p>
-              </div>
-
-              {/* Manufacturer / Packer Details */}
-              <div className="p-2.5 bg-slate-50/90 rounded-md border border-slate-200 text-[10px] text-slate-700 space-y-0.5">
-                <p className="font-bold text-slate-800">
-                  Manufactured & Packed by:
-                </p>
-                <p>ABC Foods Pvt. Ltd., Plot 42-B, Industrial Area Phase-II,</p>
-                <p>New Delhi - 110020, India. Lic. No. 10018011000234</p>
-              </div>
-
-              {/* Net Quantity & Date Grid */}
-              <div className="grid grid-cols-2 gap-2 text-center text-xs">
-                <div className="p-2 bg-amber-100/60 rounded-md border border-amber-200">
-                  <span className="text-[9px] uppercase font-bold text-slate-500 block">
-                    {t('netQuantity', 'Net Quantity')}
-                  </span>
-                  <strong className="text-sm font-black text-slate-900 font-mono">
-                    5 kg
-                  </strong>
-                </div>
-
-                <div className="p-2 bg-slate-50 rounded-md border border-slate-200">
-                  <span className="text-[9px] uppercase font-bold text-slate-500 block">
-                    Packed Date
-                  </span>
-                  <strong className="text-xs font-bold text-slate-800 font-mono">
-                    08/2026
-                  </strong>
-                </div>
-              </div>
-
-              {/* MRP & Consumer Care */}
-              <div className="p-2.5 bg-amber-100/30 rounded-md border border-amber-200/80 flex items-center justify-between text-xs">
-                <div>
-                  <span className="text-[9px] uppercase font-bold text-slate-500 block">
-                    {t('maximumRetailPrice', 'MRP (incl. of all taxes)')}
-                  </span>
-                  <strong className="text-base font-black text-slate-900 font-mono">
-                    ₹520.00
-                  </strong>
-                </div>
-                <div className="text-right text-[10px] text-slate-600">
-                  <p className="font-bold text-slate-700">Consumer Care:</p>
-                  <p>care@abcfoods.in</p>
-                </div>
-              </div>
+                    ) : (
+            <div className="text-slate-400 text-sm text-center">
+              Scanned image unavailable.
             </div>
           )}
 

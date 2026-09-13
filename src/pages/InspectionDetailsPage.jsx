@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { getInspection } from '../services/inspectionService';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, FileText, ExternalLink, ChevronRight, CheckCircle2, ShieldAlert } from 'lucide-react';
-import { MOCK_INSPECTION_DATA } from '../data/mockResultsData';
-import { REVIEW_STORAGE_KEY, FINAL_ASSESSMENT_OPTIONS } from '../data/mockReviewData';
-import { getInspectionHistory } from '../data/mockHistoryData';
 import { InspectionOverview } from '../components/details/InspectionOverview';
 import { ComplianceSummary } from '../components/details/ComplianceSummary';
 import { ProductInformation } from '../components/details/ProductInformation';
@@ -16,7 +14,40 @@ import { EvidenceViewer } from '../components/results/EvidenceViewer';
 import { StatusBadge } from '../components/results/StatusBadge';
 
 export const InspectionDetailsPage = () => {
-  const { inspectionId = 'INS-2026-0001' } = useParams();
+  const { inspectionId } = useParams();
+  const [inspection, setInspection] = useState(null);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState('');
+
+useEffect(() => {
+  if (!inspectionId) {
+    setError('Inspection ID is missing.');
+    setLoading(false);
+    return;
+  }
+
+  async function loadInspection() {
+    try {
+      setLoading(true);
+      setError('');
+
+      const data = await getInspection(inspectionId);
+
+      if (!data?.inspectionId) {
+        throw new Error('Invalid inspection data received.');
+      }
+
+      setInspection(data);
+    } catch (err) {
+      console.error('Failed to load inspection:', err);
+      setError(err.message || 'Failed to load inspection.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadInspection();
+}, [inspectionId]);
   const navigate = useNavigate();
 
   // Selected evidence for modal
@@ -29,6 +60,17 @@ export const InspectionDetailsPage = () => {
       const stored = localStorage.getItem(REVIEW_STORAGE_KEY);
       if (stored) return JSON.parse(stored);
     } catch (_) {}
+    if (loading) {
+  return <div className="p-8 text-center">Loading inspection...</div>;
+}
+
+if (error || !inspection) {
+  return (
+    <div className="p-8 text-center text-red-600">
+      {error || 'Inspection not found.'}
+    </div>
+  );
+}
     return {
       reviewStatus: 'REVIEWED',
       finalAssessment: 'further_review',
@@ -117,33 +159,44 @@ export const InspectionDetailsPage = () => {
       </div>
 
       {/* 1. Inspection Overview Card */}
-      <InspectionOverview
-        inspectionId={inspectionId}
-        productName={MOCK_INSPECTION_DATA.product.name}
-        category={MOCK_INSPECTION_DATA.product.category}
-        date={MOCK_INSPECTION_DATA.date}
-        officer="Officer"
-        department="Legal Metrology"
-        reviewStatus={officerReview?.reviewStatus || 'REVIEWED'}
-        finalAssessment={finalAssessmentLabel}
-      />
-
+     <InspectionOverview
+  inspectionId={inspection.inspectionId}
+  productName={inspection.product?.name || ''}
+  category={inspection.product?.category || ''}
+  date={inspection.date || ''}
+  officer={inspection.inspector?.name || ''}
+  department={inspection.inspector?.department || ''}
+  reviewStatus={inspection.review?.reviewStatus || ''}
+  finalAssessment={inspection.review?.finalAssessment || ''}
+/>
       {/* 2. Compliance Summary Cards (4 cards) */}
       <ComplianceSummary
-        complianceScore={82}
-        compliantCount={3}
-        nonCompliantCount={1}
-        needsReviewCount={2}
-      />
+  complianceScore={inspection.overall?.score || 0}
+  compliantCount={
+    (inspection.complianceChecks || []).filter(
+      (c) => c.status === 'COMPLIANT'
+    ).length
+  }
+  nonCompliantCount={
+    (inspection.complianceChecks || []).filter(
+      (c) => c.status === 'NON-COMPLIANT'
+    ).length
+  }
+  needsReviewCount={
+    (inspection.complianceChecks || []).filter(
+      (c) => c.status === 'NEEDS REVIEW'
+    ).length
+  }
+/>
 
       {/* 3. Product Information */}
-      <ProductInformation product={MOCK_INSPECTION_DATA.product} />
+      <ProductInformation product={inspection.product || {}} />
 
       {/* 4. Compliance Checks Table */}
       <ComplianceChecks
-        checks={MOCK_INSPECTION_DATA.complianceChecks}
-        onViewEvidence={handleOpenEvidence}
-      />
+  checks={inspection.complianceChecks || []}
+  onViewEvidence={handleOpenEvidence}
+/>
 
       {/* 5. Officer Review */}
       <OfficerReviewSummary

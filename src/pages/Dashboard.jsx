@@ -19,7 +19,6 @@ import { StatCard } from '../components/common/StatCard';
 import { StatusBadge } from '../components/results/StatusBadge';
 import { useToast } from '../components/common/Toast';
 import { useLanguage } from '../context/LanguageContext';
-import { STATS_DATA, COMPLIANCE_CHART_DATA, RECENT_INSPECTIONS } from '../data/mockData';
 
 export const Dashboard = () => {
   const navigate = useNavigate();

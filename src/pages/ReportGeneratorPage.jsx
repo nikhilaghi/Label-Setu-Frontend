@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { getInspection } from '../services/inspectionService';
 import { useNavigate } from 'react-router-dom';
 import { FileText, ArrowLeft, ShieldCheck, AlertCircle, FileCheck, CheckCircle2, Sliders, Eye } from 'lucide-react';
-import { MOCK_INSPECTION_DATA } from '../data/mockResultsData';
-import { REVIEW_STORAGE_KEY, FINAL_ASSESSMENT_OPTIONS } from '../data/mockReviewData';
 import { ReportConfiguration } from '../components/report/ReportConfiguration';
 import { ReportSummaryCard } from '../components/report/ReportSummaryCard';
 import { ReportGenerating } from '../components/report/ReportGenerating';
@@ -13,28 +12,31 @@ import { StatusBadge } from '../components/results/StatusBadge';
 export const ReportGeneratorPage = () => {
   const navigate = useNavigate();
 
-  // Load officer review from localStorage if available
-  const [officerReview, setOfficerReview] = useState(() => {
-    try {
-      const stored = localStorage.getItem(REVIEW_STORAGE_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (_) {}
-    return {
-      reviewStatus: 'REVIEWED',
-      finalAssessment: 'further_review',
-      decisions: {
-        chk_mrp: 'confirm',
-        chk_care: 'confirm',
-        chk_font: 'further',
-      },
-      observations: {
-        chk_care: 'Consumer care contact contains non-standard placeholder characters (1800-XXX-XXXX). Notice recommended under statutory provisions.',
-      },
-      reviewDate: new Date().toISOString(),
-    };
-  });
+  const [searchParams] = useSearchParams();
+const inspectionId = searchParams.get('inspectionId');
+
+const [inspectionData, setInspectionData] = useState(null);
+const [officerReview, setOfficerReview] = useState(null);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  if (!inspectionId) {
+    setLoading(false);
+    return;
+  }
+
+  getInspection(inspectionId)
+    .then((data) => {
+      setInspectionData(data);
+      setOfficerReview(data.review || null);
+    })
+    .catch((error) => {
+      console.error('Failed to load inspection:', error);
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+}, [inspectionId]);
 
   // Phases: 'config' | 'generating' | 'preview'
   const [phase, setPhase] = useState('config');
@@ -96,12 +98,25 @@ export const ReportGeneratorPage = () => {
   };
 
   const isReviewed = officerReview?.reviewStatus === 'REVIEWED';
-  const finalAssessmentObj = FINAL_ASSESSMENT_OPTIONS.find(
-    (o) => o.id === officerReview?.finalAssessment
-  );
   const finalAssessmentLabel =
-    finalAssessmentObj?.label || officerReview?.finalAssessment || 'Inspection Requires Further Review';
+  officerReview?.finalAssessment || 'Not reviewed';
+  if (loading) {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <p className="text-sm text-slate-500">Loading inspection...</p>
+    </div>
+  );
+}
 
+if (!inspectionData) {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <p className="text-sm text-red-500">
+        Inspection data could not be loaded.
+      </p>
+    </div>
+  );
+}
   return (
     <div className="space-y-6 pb-12">
       {/* Top Banner / Heading (hidden in print) */}
@@ -140,13 +155,13 @@ export const ReportGeneratorPage = () => {
           <div>
             <span className="text-slate-400 block text-[11px]">Inspection ID</span>
             <span className="font-mono font-bold text-cyan-400 text-sm">
-              {MOCK_INSPECTION_DATA.inspectionId}
+              {inspectionData?.inspectionId || inspectionId}
             </span>
           </div>
           <div>
             <span className="text-slate-400 block text-[11px]">Product</span>
             <span className="font-bold text-slate-100 truncate block">
-              {MOCK_INSPECTION_DATA.product.name}
+              {inspectionData?.product?.name || inspectionData?.productName || 'Unknown Product'}
             </span>
           </div>
           <div>
@@ -192,9 +207,9 @@ export const ReportGeneratorPage = () => {
             </div>
             <div className="lg:col-span-5">
               <ReportSummaryCard
-                inspectionData={MOCK_INSPECTION_DATA}
-                officerReview={officerReview}
-              />
+  inspectionData={inspectionData}
+  officerReview={officerReview}
+/>
             </div>
           </div>
 
@@ -223,12 +238,12 @@ export const ReportGeneratorPage = () => {
           {/* Action toolbar */}
           <ReportActions
             onGenerateAgain={handleGenerateAgain}
-            inspectionId={MOCK_INSPECTION_DATA.inspectionId}
+            inspectionId={inspectionData?.inspectionId || inspectionId}
           />
 
           {/* Report Preview Document */}
           <ReportPreview
-            inspectionData={MOCK_INSPECTION_DATA}
+  inspectionData={inspectionData}
             officerReview={officerReview}
             reportType={reportType}
             selectedSections={selectedSections}

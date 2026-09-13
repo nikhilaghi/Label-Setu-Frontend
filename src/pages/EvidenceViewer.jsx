@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { mockEvidenceData } from '../data/mockEvidenceData';
 import { ImageOverlay } from '../components/evidence/ImageOverlay';
 import { FindingDetails } from '../components/evidence/FindingDetails';
 
 
 export const EvidenceViewer = () => {
-  const { imageUrl, findings } = mockEvidenceData;
   const [activeId, setActiveId] = useState(null);
 
   const handleSelect = (id) => {
