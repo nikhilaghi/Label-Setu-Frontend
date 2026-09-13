@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -118,16 +119,7 @@ useEffect(() => {
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [targetReviewFinding, setTargetReviewFinding] = useState(null);
-  const [savedOfficerReview, setSavedOfficerReview] = useState(() => {
-    try {
-      const stored = localStorage.getItem(REVIEW_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return parsed.reviewStatus === 'REVIEWED' ? parsed : null;
-      }
-    } catch (_) {}
-    return null;
-  });
+  const [savedOfficerReview, setSavedOfficerReview] = useState(null);
   const [activeRegionId, setActiveRegionId] = useState(null);
 
 
@@ -165,19 +157,15 @@ useEffect(() => {
 
   const handleSaveReview = (reviewData) => {
     setSavedOfficerReview(reviewData);
-    const historyRecord = {
-     productName: inspection.product?.name || 'Unknown Product',
-manufacturer: inspection.product?.manufacturer || 'Unknown',
-netQuantity: inspection.product?.netQuantity || '-',
-mrp: inspection.product?.mrp || '-',
-      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      rawDate: new Date().toISOString().split('T')[0],
-      officer: inspection.inspector?.name || 'Officer',
-      complianceScore: inspection.overall?.score || 82,
-      status: reviewData.decision === 'VIOLATION' ? 'NON-COMPLIANT' : 'COMPLIANT',
-      hasReport: true,
-      hasEvidence: true,
-    };
+    const handleSaveReview = (reviewData) => {
+  setSavedOfficerReview(reviewData);
+
+  addToast({
+    title: 'Officer Review Logged',
+    message: `Assessment marked as "${reviewData.decision}" by officer.`,
+    type: 'success',
+  });
+};
     addToast({
       title: 'Officer Review Logged',
       message: `Assessment marked as "${reviewData.decision}" by officer.`,
