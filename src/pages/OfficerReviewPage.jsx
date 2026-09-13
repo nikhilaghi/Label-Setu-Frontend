@@ -115,10 +115,7 @@ export const OfficerReviewPage = () => {
 
   // Evidence viewer state
 
-  // Sync to localStorage whenever state changes
-  useEffect(() => {
-    persist(reviewState);
-  }, [reviewState]);
+
 
   // ---- computed ----
   const allDecisionsMade = REVIEW_FINDINGS.every((f) => !!reviewState.decisions[f.id]);
