@@ -162,7 +162,6 @@ useEffect(() => {
     hasEvidence: true,
   };
 
-  saveInspectionToHistory(historyRecord);
 }, [inspection, savedOfficerReview]);
 
   // Handlers
@@ -212,7 +211,6 @@ mrp: inspection.product?.mrp || '-',
       hasReport: true,
       hasEvidence: true,
     };
-    saveInspectionToHistory(historyRecord);
     addToast({
       title: 'Officer Review Logged',
       message: `Assessment marked as "${reviewData.decision}" by officer.`,
