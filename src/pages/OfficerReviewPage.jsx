@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { getInspection } from '../services/inspectionService';
 import {
   ArrowLeft,
   ClipboardCheck,
@@ -24,7 +25,7 @@ import { EvidenceViewer } from '../components/results/EvidenceViewer';
 import { useToast } from '../components/common/Toast';
 import { useLanguage } from '../context/LanguageContext';
 
-// ---------- helpers ----------
+
 const buildInitialState = () => {
   try {
     const stored = localStorage.getItem(REVIEW_STORAGE_KEY);
@@ -66,15 +67,53 @@ export const OfficerReviewPage = () => {
   const { addToast } = useToast();
   const { t } = useLanguage();
 
+  const [inspection, setInspection] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const [evidenceData, setEvidenceData] = useState(null);
+  const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
+
   const [reviewState, setReviewState] = useState(buildInitialState);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(
     () => buildInitialState().reviewStatus === 'REVIEWED'
   );
 
+
+  useEffect(() => {
+    if (!inspectionId) {
+      setLoading(false);
+      return;
+    }
+
+    getInspection(inspectionId)
+      .then((data) => {
+        console.log("REAL REVIEW INSPECTION:", data);
+        setInspection(data);
+      })
+      .catch((err) => {
+        console.error("Failed to load inspection:", err);
+        setInspection(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [inspectionId]);
+
+  useEffect(() => {
+    persist(reviewState);
+  }, [reviewState]);
+
+  if (loading) {
+    return <div className="p-8">Loading inspection...</div>;
+  }
+
+  if (!inspection) {
+    return <div className="p-8">Inspection not found.</div>;
+  }
+
+
   // Evidence viewer state
-  const [evidenceData, setEvidenceData] = useState(null);
-  const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
 
   // Sync to localStorage whenever state changes
   useEffect(() => {
